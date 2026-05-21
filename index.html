@@ -75,7 +75,7 @@
 
     <div class="header">
         <h1>منظومة معالجة كشوف الرقمنة التلقائية والإحصاء المدرج</h1>
-        <p>الحفاظ الكامل على اسم الملف الأصلي وبنيته التنسيقية وتوليد التقارير البيداغوجية</p>
+        <p>الحفاظ الكامل على الأسماء والنصوص وبنية التنسيق وتوليد التقارير البيداغوجية السبع الوزارية</p>
     </div>
 
     <div class="upload-box" id="drop-zone">
@@ -118,7 +118,7 @@
             </div>
 
             <div class="remediation-box">
-                <div class="stats-title">🎯 مصفوفة التلاميذ المقترحين للحصص الدعم والمعالجة البيداغوجية:</div>
+                <div class="stats-title">🎯 مصفوفة التلاميذ المقترحين لحصص الدعم والمعالجة البيداغوجية:</div>
                 <div id="remediation-list" style="font-size: 13.5px; line-height: 1.8;">
                     في انتظار رفع الملف لتحليل القوائم الاسمية...
                 </div>
@@ -127,15 +127,15 @@
     </div>
 
     <div class="info-list">
-        <b>💡 دليل الميزات الذكية المدمجة:</b><br>
-        • <b>حفظ التسمية:</b> تصدير الملف المعالج يتم فوراً بنفس اسم الملف المرفوع دون زيادة أو نقصان.<br>
-        • <b>المعالجة البيداغوجية:</b> يقوم النظام بفرز آلي لأسماء التلاميذ الذين يحتاجون معالجة بيداغوجية في كل مادة بشكل مستقل.<br>
-        • <b>الطباعة الفورية:</b> زر الـ PDF يقوم بتنسيق الإحصائيات وجداول الفئات السبع في صفحة رسمية بيضاء نظيفة جاهزة للتسليم.
+        <b>💡 دليل الميزات المصلحة والمحدثة:</b><br>
+        • <b>حفظ النصوص والأسماء:</b> يضمن الكود قراءة الخلايا كقيم ونصوص مدمجة دون التأثير على عمود الأسماء أو الأسطر العليا الوزارية.<br>
+        • <b>المعالجة البيداغوجية:</b> فرز آلي لأسماء التلاميذ المتعثرين بناءً على قراءة آمنة لعمود التلميذ.<br>
+        • <b>التنزيل التلقائي السريع:</b> تصدير فوري ومباشر يحافظ على نفس الاسم الأصلي ونفس التنسيقات والخلايا دون أي تعديل خارجي.
     </div>
 </div>
 
 <script>
-    const DATA_START_ROW = 7;
+    const DATA_START_ROW = 7; // السطر الثامن الفعلي لبدء معالجة التلاميذ بالرقمنة
     const fileInput = document.getElementById('file-input');
     const statusDisplay = document.getElementById('status-display');
     const statsSection = document.getElementById('stats-section');
@@ -144,7 +144,6 @@
     const actionArea = document.getElementById('action-area');
     const themeToggle = document.getElementById('theme-toggle');
 
-    // تفعيل وضع الليل والنهار
     themeToggle.addEventListener('click', () => {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         if (currentTheme === 'dark') {
@@ -161,7 +160,7 @@
         if (!file) return;
 
         const originalFileName = file.name;
-        statusDisplay.innerHTML = "🔄 جاري المعالجة الشاملة، توليد الإحصائيات السبع وحصر قوائم المعالجة...";
+        statusDisplay.innerHTML = "🔄 جاري المعالجة الآمنة للملف وتوليد الإحصائيات الوزارية السبع...";
         statsSection.style.display = "none";
         actionArea.style.display = "none";
         statsTbody.innerHTML = "";
@@ -171,13 +170,15 @@
         reader.onload = function(e) {
             try {
                 const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array', cellStyles: true, cellNF: true});
+                // ميزة حاسمة: القراءة مع الحفاظ على التنسيق والبيانات النصية raw: false
+                const workbook = XLSX.read(data, {type: 'array', cellStyles: true, cellNF: true, cellDates: true});
                 let htmlStatsContent = "";
                 let remediationContent = "";
 
                 workbook.SheetNames.forEach(sheetName => {
                     let worksheet = workbook.Sheets[sheetName];
-                    let rows = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
+                    // تحويل مصلح يضمن عدم تفكيك الكلمات والنصوص الأصلية
+                    let rows = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: "", raw: false});
                     if (rows.length <= DATA_START_ROW) return;
 
                     let isMath = sheetName.includes("رياضيات") || sheetName.includes("Math");
@@ -187,7 +188,11 @@
                     let isLanguage3Colors = isArabic || isFrench || isEnglish;
 
                     let obsColumnIndex = -1;
-                    if (rows[6]) { obsColumnIndex = rows[6].indexOf("obs"); }
+                    if (rows[6]) { 
+                        for(let c=0; c<rows[6].length; c++) {
+                            if(String(rows[6][c]).trim().toLowerCase() === "obs") { obsColumnIndex = c; break; }
+                        }
+                    }
                     if (obsColumnIndex === -1) { obsColumnIndex = isMath ? 9 : (isLanguage3Colors ? 8 : 5); }
 
                     let totalStudents = 0, totalPassed = 0;
@@ -196,11 +201,11 @@
 
                     for (let i = DATA_START_ROW; i < rows.length; i++) {
                         let row = rows[i];
-                        if (!row || !row[0] || isNaN(row[0]) || row[0] === "") continue;
+                        if (!row || !row[0] || isNaN(parseInt(row[0])) || String(row[0]).trim() === "") continue;
 
                         totalStudents++;
                         let score = 0;
-                        let studentName = row[1] || `تلميذ رقم ${row[0]}`;
+                        let studentName = row[1] ? String(row[1]).trim() : `تلميذ رقم ${row[0]}`;
 
                         if (isLanguage3Colors) {
                             let m1 = parseFloat(row[4]) || 0;
@@ -286,7 +291,7 @@
                 remediationList.innerHTML = remediationContent;
                 statsSection.style.display = "block";
                 actionArea.style.display = "flex";
-                statusDisplay.innerHTML = "🎉 اكتمل الحساب بنجاح! جاري تحميل ملفك الآن تلقائياً وبنفس اسمه الأصلي...";
+                statusDisplay.innerHTML = "🎉 تم الحساب بأمان التام والأسماء سليمة! جاري التنزيل تلقائياً...";
 
                 setTimeout(() => {
                     try {
@@ -305,27 +310,26 @@
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-                        statusDisplay.innerHTML = "✅ تم المعالجة والتنزيل التلقائي بنجاح وبنفس الاسم الأصلي!";
+                        statusDisplay.innerHTML = "✅ تم معالجة وحقن الملاحظات بنجاح تام وحفظ الملف بنفس اسمه الأصلي!";
                     } catch (err) {
                         statusDisplay.innerHTML = "❌ حدثت مشكلة أثناء تصدير ملف الإكسل.";
                         console.error(err);
                     }
-                }, 700);
+                }, 800);
 
             } catch (err) {
-                statusDisplay.innerHTML = "❌ خطأ أثناء معالجة بنية الملف.";
+                statusDisplay.innerHTML = "❌ خطأ أثناء معالجة بنية كراسة النقاط للرقمنة.";
                 console.error(err);
             }
         };
         reader.readAsArrayBuffer(file);
     });
 
-    // كود طباعة تقرير الـ PDF المنسق
     document.getElementById('print-pdf-btn').addEventListener('click', () => {
         const element = document.getElementById('pdf-content');
         const opt = {
             margin:       15,
-            filename:     'تقرير_الإحصاء_والمعالجة_البيداغوجية.pdf',
+            filename:     'تقرير_الإحصاء_والفئات_السبع_الوزارية.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 2, useCORS: true },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
