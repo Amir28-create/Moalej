@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المنظومة الشاملة لمعالجة كشوف الرقمنة (القديمة والحديثة)</title>
+    <title>المنظومة الاحترافية الشاملة لمعالجة كشوف الرقمنة</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -32,16 +32,16 @@
 <div class="container">
     <div class="top-bar"><button class="theme-btn" id="theme-toggle">🌙 الوضع الداكن</button></div>
     <div class="header">
-        <h1>منظومة معالجة كشوف الرقمنة الشاملة (النسخة الاحترافية المرنة)</h1>
-        <p>دعم كامل للملفات القديمة والحديثة (.xls / .xlsx) مع الحماية المطلقة للغة العربية</p>
+        <h1>منظومة معالجة كشوف الرقمنة التلقائية (النسخة المرنة والمصححة بالكامل)</h1>
+        <p>دعم كامل لكشوف السنوات الحالية والماضية مع الكشف الذكي التلقائي عن أسطر التلاميذ</p>
     </div>
 
     <div class="upload-box">
-        <b>📁 ارفع ملف الرقمنة (سواء كان للسنة الحالية أو السنوات الماضية .xls أو .xlsx)</b>
+        <b>📁 ارفع ملف الرقمنة (الحالي أو السنوات الماضية .xlsx / .xls)</b>
         <input type="file" id="file-input" accept=".xlsx, .xls">
     </div>
 
-    <div class="status-bar" id="status-display">في انتظار رفع كشف النقاط...</div>
+    <div class="status-bar" id="status-display">في انتظار رفع كشف النقاط لفك التشفير الديناميكي...</div>
     <div class="action-btns" id="action-area" style="display: none;">
         <button class="btn" id="print-pdf-btn" style="background-color: #10b981; color: white;">🖨️ طباعة تقرير الإحصاء المنسق (PDF)</button>
     </div>
@@ -81,41 +81,37 @@
         const file = e.target.files[0];
         if (!file) return;
 
-        let originalFileName = file.name;
-        // حماية الامتداد عند إعادة التصدير ليكون دائماً متوافقاً ومتطابقاً
-        statusDisplay.innerHTML = "🔄 جاري فحص ترميز الملف وقراءة النصوص العربية بأمان...";
+        const originalFileName = file.name;
+        statusDisplay.innerHTML = "🔄 جاري الفحص الديناميكي لهيكل كشف السنة الماضية...";
         
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
                 const data = new Uint8Array(e.target.result);
-                
-                // ميزة حاسمة: إضافة التوجيه التلقائي للترميز وقراءة ملفات xls القديمة بـ codepage 65001 (UTF-8)
-                const workbook = XLSX.read(data, {
-                    type: 'array', 
-                    cellStyles: true, 
-                    cellNF: true,
-                    codepage: 65001
-                });
-                
+                const workbook = XLSX.read(data, {type: 'array', cellStyles: true, cellNF: true});
                 let htmlContent = ""; let remContent = "";
 
                 workbook.SheetNames.forEach(sheetName => {
                     let worksheet = workbook.Sheets[sheetName];
-                    let rows = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: "", raw: false});
+                    let rows = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
                     if (rows.length < 3) return;
 
-                    let startRow = -1;
-                    for (let r = 0; r < rows.length; r++) {
-                        if (rows[r] && (rows[r][0] == "1" || parseInt(rows[r][0]) === 1 || rows[r][1] == "1")) {
-                            startRow = r;
+                    // 1. كشف ذكي لسطر العناوين وسطر بداية التلاميذ بدقة
+                    let headerRowIndex = -1;
+                    for (let r = 0; r < Math.min(rows.length, 15); r++) {
+                        let rowStr = JSON.stringify(rows[r]).toLowerCase();
+                        if (rowStr.includes("اللقب") || rowStr.includes("nom") || rowStr.includes("المعدل") || rowStr.includes("moyenne")) {
+                            headerRowIndex = r;
                             break;
                         }
                     }
-                    if (startRow === -1) startRow = 7;
+                    
+                    // إذا لم يعثر عليه بالكلمات، نضع قيمة افتراضية للرقمنة (السطر السابع)
+                    if (headerRowIndex === -1) headerRowIndex = 6;
+                    let startRow = headerRowIndex + 1;
 
-                    let scoreCol = -1; let obsCol = -1;
-                    let headerRowIndex = Math.max(0, startRow - 1);
+                    // 2. تحديد الأعمدة تلقائياً
+                    let nameCol = 1; let scoreCol = -1; let obsCol = -1;
                     let headers = rows[headerRowIndex] || [];
 
                     for (let c = 0; c < headers.length; c++) {
@@ -125,6 +121,9 @@
                         }
                         if (headerText.includes("معدل") || headerText.includes("moyenne") || headerText.includes("النهائي")) {
                             scoreCol = c;
+                        }
+                        if (headerText.includes("اللقب") || headerText.includes("الاسم") || headerText.includes("nom")) {
+                            nameCol = c;
                         }
                     }
 
@@ -139,12 +138,14 @@
                     let total = 0, passed = 0, c1=0, c2=0, c3=0, c4=0, c5=0, c6=0, c7=0;
                     let weaks = [];
 
+                    // 3. مسح الأسطر ومعالجتها (شرط الاستمرار وجود نص أو اسم تلميذ)
                     for (let i = startRow; i < rows.length; i++) {
                         let row = rows[i];
-                        if (!row || row.length === 0 || isNaN(parseInt(row[0])) || String(row[0]).trim() === "") continue;
+                        // التأكد أن السطر ليس فارغاً تماماً ويحتوي على اسم تلميذ حقيقي
+                        if (!row || row.length === 0 || !row[nameCol] || String(row[nameCol]).trim() === "" || String(row[nameCol]).includes("المجموع") || String(row[nameCol]).includes("moyenne")) continue;
 
                         total++;
-                        let name = row[1] ? String(row[1]).trim() : `تلميذ رقم ${row[0]}`;
+                        let name = String(row[nameCol]).trim();
                         let score = parseFloat(row[scoreCol]);
                         
                         if (isNaN(score) || score === 0) {
@@ -186,28 +187,19 @@
                 statsTbody.innerHTML = htmlContent;
                 remediationList.innerHTML = remContent;
                 statsSection.style.display = "block"; actionArea.style.display = "flex";
-                statusDisplay.innerHTML = "🎉 اكتملت المعالجة الآمنة لملفك! جاري التحميل فوراً...";
+                statusDisplay.innerHTML = "🎉 نجحت المنظومة في معالجة ملف السنة الماضية! جاري التحميل التلقائي...";
 
-                // تحديد الصيغة التلقائية للتصدير بناءً على اسم الملف المرفوع لعدم إتلافه
-                let isOldFile = originalFileName.toLowerCase().endsWith('.xls');
-                const wbout = XLSX.write(workbook, {
-                    bookType: isOldFile ? 'xlml' : 'xlsx', 
-                    type: 'binary', 
-                    cellStyles: true
-                });
-                
+                const wbout = XLSX.write(workbook, {bookType: 'xlsx', type: 'binary', cellStyles: true});
                 const blob = new Blob([function(s){
                     const buf = new ArrayBuffer(s.length), view = new Uint8Array(buf);
                     for (let i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF; return buf;
                 }(wbout)], {type: "application/octet-stream"});
                 
                 const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob); 
-                link.download = originalFileName;
+                link.href = URL.createObjectURL(blob); link.download = originalFileName;
                 document.body.appendChild(link); link.click(); document.body.removeChild(link);
-                statusDisplay.innerHTML = "✅ تم معالجة وتصدير الملف القديم/الحديث بنجاح تام وبدون مسح للبيانات!";
             } catch (err) {
-                statusDisplay.innerHTML = "❌ حدث خطأ أثناء فك تشفير ترميز الملف القديم.";
+                statusDisplay.innerHTML = "❌ حدث خطأ أثناء قراءة خلايا هذا الملف.";
                 console.error(err);
             }
         };
