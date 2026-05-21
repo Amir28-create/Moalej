@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منظومة معالجة كشوف الرقمنة التلقائية المحدثة</title>
+    <title>المنظومة الديناميكية المرنة لمعالجة كشوف الرقمنة</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -21,7 +21,7 @@
         .action-btns { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
         .btn { background-color: var(--primary); color: #000; font-weight: bold; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; }
         .stats-section { margin-top: 30px; display: none; }
-        .stats-table { width: 100%; border-collapse: collapse; text-align: center; }
+        .stats-table { width: 100%; border-collapse: collapse; text-align: center; margin-bottom: 20px; }
         .stats-table th { background-color: var(--primary); color: #000; padding: 12px; font-size: 13px; }
         .stats-table td { padding: 10px; border-bottom: 1px solid var(--border-color); color: var(--text-color); }
         .remediation-box { background: rgba(239, 68, 68, 0.05); border: 1px dashed #ef4444; padding: 20px; border-radius: 8px; margin-top: 25px; }
@@ -32,18 +32,18 @@
 <div class="container">
     <div class="top-bar"><button class="theme-btn" id="theme-toggle">🌙 الوضع الداكن</button></div>
     <div class="header">
-        <h1>منظومة معالجة كشوف الرقمنة التلقائية والإحصاء المدرج</h1>
-        <p>نسخة آمنة ومحصنة ضد أخطاء قراءة الملفات وهيكلة الجداول</p>
+        <h1>منظومة معالجة كشوف الرقمنة التلقائية الذكية (النسخة المرنة بالكامل)</h1>
+        <p>التحليل التلقائي الديناميكي للأعمدة والأسطر مع الحفاظ المطلق على نصوص ومظهر الملف</p>
     </div>
 
     <div class="upload-box">
-        <b>📁 اسحب ملف الرقمنة هنا أو انقر للاختيار للتعبئة الفورية</b>
+        <b>📁 ارفع أي ملف إكسل خاص بالرقمنة هنا (يتكيف تلقائياً مع بنية الجدول)</b>
         <input type="file" id="file-input" accept=".xlsx, .xls">
     </div>
 
-    <div class="status-bar" id="status-display">في انتظار رفع كراسة النقاط...</div>
+    <div class="status-bar" id="status-display">في انتظار رفع كشف النقاط لفك التشفير الديناميكي...</div>
     <div class="action-btns" id="action-area" style="display: none;">
-        <button class="btn" id="print-pdf-btn" style="background-color: #10b981; color: white;">🖨️ طباعة تقرير الإحصاء (PDF)</button>
+        <button class="btn" id="print-pdf-btn" style="background-color: #10b981; color: white;">🖨️ طباعة تقرير الإحصاء المنسق (PDF)</button>
     </div>
 
     <div class="stats-section" id="stats-section">
@@ -58,7 +58,7 @@
                 <tbody id="stats-tbody"></tbody>
             </table>
             <div class="remediation-box">
-                <h4>🎯 قائمة التلاميذ المقترحين لحصص المعالجة البيداغوجية:</h4>
+                <h4>🎯 مصفوفة التلاميذ المقترحين لحصص المعالجة البيداغوجية:</h4>
                 <div id="remediation-list"></div>
             </div>
         </div>
@@ -81,54 +81,88 @@
         const file = e.target.files[0];
         if (!file) return;
 
-        statusDisplay.innerHTML = "🔄 جاري التحليل الآمن للملف وحقن الملاحظات...";
+        const originalFileName = file.name;
+        statusDisplay.innerHTML = "🔄 جاري الفحص الشامل وتحديد الأعمدة والأسطر ديناميكياً...";
+        
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
                 const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array', cellStyles: true});
+                // ميزة الحفاظ على البيانات الكلية للملف والألوان والتنسيقات الأصيلة
+                const workbook = XLSX.read(data, {type: 'array', cellStyles: true, cellNF: true});
                 let htmlContent = ""; let remContent = "";
 
                 workbook.SheetNames.forEach(sheetName => {
                     let worksheet = workbook.Sheets[sheetName];
                     let rows = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
-                    if (rows.length < 5) return;
+                    if (rows.length < 3) return;
 
+                    // 1. البحث عن سطر بداية التلاميذ (أول سطر يبدأ برقم 1 في أول عمود ممتلئ)
+                    let startRow = -1;
+                    for (let r = 0; r < rows.length; r++) {
+                        if (rows[r] && (rows[r][0] == "1" || parseInt(rows[r][0]) === 1 || rows[r][1] == "1")) {
+                            startRow = r;
+                            break;
+                        }
+                    }
+                    if (startRow === -1) startRow = 7; // قيمة احتياطية افتراضية
+
+                    // 2. التحليل الذكي للأعمدة (البحث عن عمود المعدل وعمود الملاحظات)
+                    let nameCol = 1; 
+                    let scoreCol = -1;
+                    let obsCol = -1;
+
+                    // فحص الأسطر القريبة فوق سطر البداية لاستخراج الأسماء الدقيقة للأعمدة
+                    let headerRowIndex = Math.max(0, startRow - 1);
+                    let headers = rows[headerRowIndex] || [];
+
+                    for (let c = 0; c < headers.length; c++) {
+                        let headerText = String(headers[c]).trim().toLowerCase();
+                        if (headerText.includes("obs") || headerText.includes("ملاحظات") || headerText.includes("التقدير") || headerText.includes("توجيه")) {
+                            obsCol = c;
+                        }
+                        // البحث عن عمود المعدل النهائي أو علامة المادة
+                        if (headerText.includes("معدل") || headerText.includes("moyenne") || headerText.includes("المعدل") || headerText.includes("النهائي")) {
+                            scoreCol = c;
+                        }
+                    }
+
+                    // إذا لم يجد العناوين نصياً، يحددها بناءً على نوع المادة احترازياً
                     let isMath = sheetName.includes("رياضيات") || sheetName.includes("Math");
                     let isFrench = sheetName.includes("فرنسية") || sheetName.includes("Français");
                     let isEnglish = sheetName.includes("إنجليزية") || sheetName.includes("English");
                     let isLanguage = sheetName.includes("عربية") || isFrench || isEnglish;
 
-                    // البحث الديناميكي التلقائي عن السطر وعمود الملاحظات لتفادي كلمة "خطأ"
-                    let startRow = 7;
-                    let obsCol = isMath ? 9 : (isLanguage ? 8 : 5);
-                    
-                    for(let r=0; r<Math.min(rows.length, 12); r++) {
-                        if(rows[r] && rows[r][0] == "1") { startRow = r; break; }
+                    if (scoreCol === -1) {
+                        scoreCol = isLanguage ? 8 : (isMath ? 9 : 4); 
                     }
-                    if(rows[startRow-1]) {
-                        for(let c=0; c<rows[startRow-1].length; c++) {
-                            if(String(rows[startRow-1][c]).toLowerCase().includes("obs")) { obsCol = c; break; }
-                        }
+                    if (obsCol === -1) {
+                        obsCol = isMath ? 9 : (isLanguage ? 8 : 5);
                     }
 
                     let total = 0, passed = 0, c1=0, c2=0, c3=0, c4=0, c5=0, c6=0, c7=0;
                     let weaks = [];
 
+                    // 3. المعالجة وحقن الملاحظات بدون لمس البيانات المجاورة
                     for (let i = startRow; i < rows.length; i++) {
                         let row = rows[i];
-                        if (!row || row.length === 0 || isNaN(parseInt(row[0]))) continue;
+                        if (!row || row.length === 0 || isNaN(parseInt(row[0])) || String(row[0]).trim() === "") continue;
 
                         total++;
-                        let score = 0;
-                        let name = row[1] ? String(row[1]).trim() : `تلميذ ${row[0]}`;
-
-                        if (isLanguage) {
-                            score = (((parseFloat(row[4])||0) + (parseFloat(row[5])||0) + (parseFloat(row[6])||0)) / 3 + (parseFloat(row[7])||0)) / 2;
-                        } else if (isMath) {
-                            score = (((parseFloat(row[4])||0) + (parseFloat(row[5])||0) + (parseFloat(row[6])||0) + (parseFloat(row[7])||0)) / 4 + (parseFloat(row[8])||0)) / 2;
-                        } else {
-                            score = parseFloat(row[4]) || 0;
+                        // محاولة قراءة الاسم بأمان تفرعي من العمود الأول أو الثاني
+                        let name = row[1] ? String(row[1]).trim() : (row[2] ? String(row[2]).trim() : `تلميذ رقم ${row[0]}`);
+                        
+                        // حساب أو قراءة المعدل ديناميكياً بحسب المدخلات المتوفرة في السطر
+                        let score = parseFloat(row[scoreCol]);
+                        if (isNaN(score) || score === 0) {
+                            // إذا كان العمود المكتشف فارغاً، يحسبه تلقائياً بناءً على مصفوفة المواد واللغات للرقمنة
+                            if (isLanguage && row[4] && row[7]) {
+                                score = (((parseFloat(row[4])||0) + (parseFloat(row[5])||0) + (parseFloat(row[6])||0)) / 3 + (parseFloat(row[7])||0)) / 2;
+                            } else if (isMath && row[4] && row[8]) {
+                                score = (((parseFloat(row[4])||0) + (parseFloat(row[5])||0) + (parseFloat(row[6])||0) + (parseFloat(row[7])||0)) / 4 + (parseFloat(row[8])||0)) / 2;
+                            } else {
+                                score = parseFloat(row[4]) || 0;
+                            }
                         }
 
                         score = Math.round(score * 100) / 100;
@@ -136,11 +170,21 @@
 
                         if (score < 4) c1++; else if (score < 5) c2++; else if (score < 6) c3++; else if (score < 7) c4++; else if (score < 8) c5++; else if (score < 9) c6++; else c7++;
 
-                        let obs = score < 5 ? "نتائج غير كافية" : (score < 6 ? "نتائج متوسطة" : (score < 7 ? "نتائج حسنة" : (score < 8 ? "نتائج جيدة" : "نتائج ممتازة")));
-                        if(isFrench) obs = score < 5 ? "Insuffisant" : "Moyen";
+                        // تخصيص لغة الملاحظة حسب المادة المكتشفة بالكامل
+                        let obs = "نتائج غير كافية";
+                        if (isFrench) {
+                            obs = score < 5 ? "Résultats insuffisants" : (score < 6 ? "Moyen" : (score < 7 ? "Assez bien" : "Bien"));
+                        } else if (isEnglish) {
+                            obs = score < 5 ? "Insufficient" : (score < 6 ? "Average" : (score < 7 ? "Good" : "Very good"));
+                        } else {
+                            obs = score < 5 ? "نتائج غير كافية" : (score < 6 ? "نتائج متوسطة" : (score < 7 ? "نتائج حسنة" : (score < 8 ? "نتائج جيدة" : "نتائج ممتازة")));
+                        }
                         
+                        // حقن الملاحظة في الخلية المستهدفة مع حفظ ستايل الخلية الأصلي بالكامل
                         let cellRef = XLSX.utils.encode_cell({r: i, c: obsCol});
-                        worksheet[cellRef] = { t: 's', v: obs };
+                        if (!worksheet[cellRef]) worksheet[cellRef] = {};
+                        worksheet[cellRef].t = 's';
+                        worksheet[cellRef].v = obs;
                     }
 
                     if(total > 0) {
@@ -152,8 +196,9 @@
                 statsTbody.innerHTML = htmlContent;
                 remediationList.innerHTML = remContent;
                 statsSection.style.display = "block"; actionArea.style.display = "flex";
-                statusDisplay.innerHTML = "🎉 تم الحساب بأمان! جاري تحميل الملف المحدث تلقائياً بنفس الاسم...";
+                statusDisplay.innerHTML = "🎉 نجح فك التشفير التلقائي للأعمدة والأسطر وجاري التحميل المباشر...";
 
+                // تصدير آمن يعيد توليد نفس الملف بنفس تركيبته الرسومية والألوان
                 const wbout = XLSX.write(workbook, {bookType: 'xlsx', type: 'binary', cellStyles: true});
                 const blob = new Blob([function(s){
                     const buf = new ArrayBuffer(s.length), view = new Uint8Array(buf);
@@ -163,12 +208,23 @@
                 const link = document.createElement("a");
                 link.href = URL.createObjectURL(blob); link.download = originalFileName;
                 document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                statusDisplay.innerHTML = "✅ اكتملت المعالجة المرنة بنجاح وحفظ الملف بنفس اسمه الأصلي!";
             } catch (err) {
-                statusDisplay.innerHTML = "❌ حدث استثناء أثناء القراءة، يرجى التأكد من أن الملف أصلي.";
+                statusDisplay.innerHTML = "❌ حدث استثناء، تأكد أن الملف مستخرج من الرقمنة مباشرة.";
                 console.error(err);
             }
         };
         reader.readAsArrayBuffer(file);
+    });
+
+    document.getElementById('print-pdf-btn').addEventListener('click', () => {
+        const element = document.getElementById('pdf-content');
+        html2pdf().set({
+            margin: 15, filename: 'تقرير_الفئات_السبع_الوزارية.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        }).from(element).save();
     });
 </script>
 </body>
