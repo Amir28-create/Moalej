@@ -1,231 +1,579 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المنظومة الديناميكية المرنة لمعالجة كشوف الرقمنة</title>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <style>
-        :root { --bg-color: #f8fafc; --card-bg: #ffffff; --text-color: #0f172a; --border-color: #e2e8f0; --primary: #0284c7; }
-        [data-theme="dark"] { --bg-color: #0f172a; --card-bg: #1e293b; --text-color: #f8fafc; --border-color: #334155; --primary: #38bdf8; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: var(--text-color); text-align: right; transition: 0.3s; }
-        .container { max-width: 1200px; margin: 0 auto; background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-top: 5px solid var(--primary); }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .theme-btn { background: var(--border-color); color: var(--text-color); border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { color: var(--primary); margin: 0; font-size: 24px; }
-        .upload-box { border: 2px dashed var(--primary); background: rgba(2, 132, 199, 0.05); padding: 40px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 25px; position: relative; }
-        .upload-box input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-        .status-bar { background: var(--border-color); padding: 15px; border-radius: 6px; text-align: center; font-weight: bold; margin-bottom: 25px; }
-        .action-btns { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
-        .btn { background-color: var(--primary); color: #000; font-weight: bold; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; }
-        .stats-section { margin-top: 30px; display: none; }
-        .stats-table { width: 100%; border-collapse: collapse; text-align: center; margin-bottom: 20px; }
-        .stats-table th { background-color: var(--primary); color: #000; padding: 12px; font-size: 13px; }
-        .stats-table td { padding: 10px; border-bottom: 1px solid var(--border-color); color: var(--text-color); }
-        .remediation-box { background: rgba(239, 68, 68, 0.05); border: 1px dashed #ef4444; padding: 20px; border-radius: 8px; margin-top: 25px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>منظومة معالجة كشوف الرقمنة</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+:root{
+    --bg-color:#f8fafc;
+    --card-bg:#ffffff;
+    --text-color:#0f172a;
+    --border-color:#e2e8f0;
+    --primary:#0284c7;
+}
+
+[data-theme="dark"]{
+    --bg-color:#0f172a;
+    --card-bg:#1e293b;
+    --text-color:#f8fafc;
+    --border-color:#334155;
+    --primary:#38bdf8;
+}
+
+body{
+    font-family:'Segoe UI',Tahoma,sans-serif;
+    background:var(--bg-color);
+    color:var(--text-color);
+    margin:0;
+    padding:20px;
+    transition:0.3s;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+    background:var(--card-bg);
+    padding:30px;
+    border-radius:12px;
+    box-shadow:0 4px 20px rgba(0,0,0,.05);
+    border-top:5px solid var(--primary);
+}
+
+.top-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.theme-btn{
+    background:var(--border-color);
+    color:var(--text-color);
+    border:none;
+    padding:8px 16px;
+    border-radius:20px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.header{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.header h1{
+    color:var(--primary);
+    margin:0;
+}
+
+.upload-box{
+    border:2px dashed var(--primary);
+    background:rgba(2,132,199,.05);
+    padding:40px;
+    text-align:center;
+    border-radius:8px;
+    cursor:pointer;
+    position:relative;
+    margin-bottom:25px;
+}
+
+.upload-box input{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    opacity:0;
+    cursor:pointer;
+}
+
+.status-bar{
+    background:var(--border-color);
+    padding:15px;
+    border-radius:6px;
+    text-align:center;
+    font-weight:bold;
+    margin-bottom:25px;
+}
+
+.action-btns{
+    display:none;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.btn{
+    background:var(--primary);
+    color:white;
+    border:none;
+    padding:12px 24px;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.stats-section{
+    display:none;
+}
+
+.stats-table{
+    width:100%;
+    border-collapse:collapse;
+    text-align:center;
+}
+
+.stats-table th{
+    background:var(--primary);
+    color:white;
+    padding:12px;
+}
+
+.stats-table td{
+    padding:10px;
+    border-bottom:1px solid var(--border-color);
+}
+
+.remediation-box{
+    margin-top:25px;
+    background:rgba(239,68,68,.05);
+    border:1px dashed #ef4444;
+    padding:20px;
+    border-radius:8px;
+}
+</style>
 </head>
+
 <body>
 
 <div class="container">
-    <div class="top-bar"><button class="theme-btn" id="theme-toggle">🌙 الوضع الداكن</button></div>
-    <div class="header">
-        <h1>منظومة معالجة كشوف الرقمنة التلقائية الذكية (النسخة المرنة بالكامل)</h1>
-        <p>التحليل التلقائي الديناميكي للأعمدة والأسطر مع الحفاظ المطلق على نصوص ومظهر الملف</p>
-    </div>
 
-    <div class="upload-box">
-        <b>📁 ارفع أي ملف إكسل خاص بالرقمنة هنا (يتكيف تلقائياً مع بنية الجدول)</b>
-        <input type="file" id="file-input" accept=".xlsx, .xls">
-    </div>
+<div class="top-bar">
+<button class="theme-btn" id="theme-toggle">🌙 الوضع الداكن</button>
+</div>
 
-    <div class="status-bar" id="status-display">في انتظار رفع كشف النقاط لفك التشفير الديناميكي...</div>
-    <div class="action-btns" id="action-area" style="display: none;">
-        <button class="btn" id="print-pdf-btn" style="background-color: #10b981; color: white;">🖨️ طباعة تقرير الإحصاء المنسق (PDF)</button>
-    </div>
+<div class="header">
+<h1>منظومة معالجة كشوف الرقمنة الذكية</h1>
+<p>تحليل ديناميكي كامل لملفات Excel</p>
+</div>
 
-    <div class="stats-section" id="stats-section">
-        <div id="pdf-content">
-            <h3>📊 التقرير الإحصائي للفوج التربوي (الفئات السبع الوزارية):</h3>
-            <table class="stats-table">
-                <thead>
-                    <tr>
-                        <th>المادة</th><th>المفحوصين</th><th>أقل من 4</th><th>4 إلى 4.99</th><th>5 إلى 5.99</th><th>6 إلى 6.99</th><th>7 إلى 7.99</th><th>8 إلى 8.99</th><th>9 إلى 10</th><th>النسبة العامة</th>
-                    </tr>
-                </thead>
-                <tbody id="stats-tbody"></tbody>
-            </table>
-            <div class="remediation-box">
-                <h4>🎯 مصفوفة التلاميذ المقترحين لحصص المعالجة البيداغوجية:</h4>
-                <div id="remediation-list"></div>
-            </div>
-        </div>
-    </div>
+<div class="upload-box">
+<b>📁 ارفع ملف Excel هنا</b>
+<input type="file" id="file-input" accept=".xlsx,.xls">
+</div>
+
+<div class="status-bar" id="status-display">
+في انتظار رفع الملف...
+</div>
+
+<div class="action-btns" id="action-area">
+<button class="btn" id="print-pdf-btn" style="background:#10b981;">
+🖨️ تصدير PDF
+</button>
+</div>
+
+<div class="stats-section" id="stats-section">
+
+<div id="pdf-content">
+
+<h3>📊 التقرير الإحصائي:</h3>
+
+<table class="stats-table">
+<thead>
+<tr>
+<th>المادة</th>
+<th>المفحوصين</th>
+<th>أقل من 4</th>
+<th>4 إلى 4.99</th>
+<th>5 إلى 5.99</th>
+<th>6 إلى 6.99</th>
+<th>7 إلى 7.99</th>
+<th>8 إلى 8.99</th>
+<th>9 إلى 10</th>
+<th>النسبة العامة</th>
+</tr>
+</thead>
+
+<tbody id="stats-tbody"></tbody>
+
+</table>
+
+<div class="remediation-box">
+<h4>🎯 التلاميذ المقترحون للمعالجة:</h4>
+<div id="remediation-list"></div>
+</div>
+
+</div>
+</div>
 </div>
 
 <script>
-    const fileInput = document.getElementById('file-input');
-    const statusDisplay = document.getElementById('status-display');
-    const statsSection = document.getElementById('stats-section');
-    const statsTbody = document.getElementById('stats-tbody');
-    const remediationList = document.getElementById('remediation-list');
-    const actionArea = document.getElementById('action-area');
 
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-        document.documentElement.getAttribute('data-theme') === 'dark' ? document.documentElement.removeAttribute('data-theme') : document.documentElement.setAttribute('data-theme', 'dark');
-    });
+const fileInput = document.getElementById("file-input");
+const statusDisplay = document.getElementById("status-display");
+const statsSection = document.getElementById("stats-section");
+const statsTbody = document.getElementById("stats-tbody");
+const remediationList = document.getElementById("remediation-list");
+const actionArea = document.getElementById("action-area");
 
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
+document.getElementById("theme-toggle").addEventListener("click", () => {
 
-        const originalFileName = file.name;
-        statusDisplay.innerHTML = "🔄 جاري الفحص الشامل وتحديد الأعمدة والأسطر ديناميكياً...";
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = new Uint8Array(e.target.result);
-                // ميزة الحفاظ على البيانات الكلية للملف والألوان والتنسيقات الأصيلة
-                const workbook = XLSX.read(data, {type: 'array', cellStyles: true, cellNF: true});
-                let htmlContent = ""; let remContent = "";
+    const dark =
+        document.documentElement.getAttribute("data-theme") === "dark";
 
-                workbook.SheetNames.forEach(sheetName => {
-                    let worksheet = workbook.Sheets[sheetName];
-                    let rows = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
-                    if (rows.length < 3) return;
+    if(dark){
+        document.documentElement.removeAttribute("data-theme");
+        document.getElementById("theme-toggle").innerText =
+            "🌙 الوضع الداكن";
+    }else{
+        document.documentElement.setAttribute("data-theme","dark");
+        document.getElementById("theme-toggle").innerText =
+            "☀️ الوضع الفاتح";
+    }
+});
 
-                    // 1. البحث عن سطر بداية التلاميذ (أول سطر يبدأ برقم 1 في أول عمود ممتلئ)
-                    let startRow = -1;
-                    for (let r = 0; r < rows.length; r++) {
-                        if (rows[r] && (rows[r][0] == "1" || parseInt(rows[r][0]) === 1 || rows[r][1] == "1")) {
-                            startRow = r;
+function cleanNumber(value){
+
+    if(value === null || value === undefined) return NaN;
+
+    value = String(value)
+        .replace(",", ".")
+        .replace(/[^\d.-]/g, "");
+
+    return parseFloat(value);
+}
+
+fileInput.addEventListener("change", async function(e){
+
+    const file = e.target.files[0];
+
+    if(!file) return;
+
+    statsTbody.innerHTML = "";
+    remediationList.innerHTML = "";
+
+    statsSection.style.display = "none";
+    actionArea.style.display = "none";
+
+    statusDisplay.innerHTML =
+        "🔄 جاري معالجة الملف...";
+
+    try{
+
+        const data = await file.arrayBuffer();
+
+        const workbook = XLSX.read(data,{
+            type:"array",
+            cellStyles:true,
+            cellNF:true
+        });
+
+        let htmlContent = "";
+        let remContent = "";
+
+        workbook.SheetNames.forEach(sheetName => {
+
+            const worksheet = workbook.Sheets[sheetName];
+
+            if(!worksheet) return;
+
+            const rows =
+                XLSX.utils.sheet_to_json(worksheet,{
+                    header:1,
+                    defval:""
+                });
+
+            if(rows.length < 2) return;
+
+            let startRow = -1;
+            let idCol = -1;
+
+            for(let r=0; r<rows.length; r++){
+
+                for(let c=0; c<5; c++){
+
+                    const value = rows[r]?.[c];
+
+                    if(parseInt(value) === 1){
+
+                        startRow = r;
+                        idCol = c;
+                        break;
+                    }
+                }
+
+                if(startRow !== -1) break;
+            }
+
+            if(startRow === -1) return;
+
+            let nameCol = idCol + 1;
+            let scoreCol = -1;
+            let obsCol = -1;
+
+            for(let r=Math.max(0,startRow-5); r<=startRow; r++){
+
+                const headers = rows[r] || [];
+
+                headers.forEach((header,c)=>{
+
+                    const text =
+                        String(header).trim().toLowerCase();
+
+                    if(
+                        text.includes("obs") ||
+                        text.includes("ملاحظات") ||
+                        text.includes("التقدير")
+                    ){
+                        obsCol = c;
+                    }
+
+                    if(
+                        text.includes("معدل") ||
+                        text.includes("moyenne") ||
+                        text.includes("علامة")
+                    ){
+                        scoreCol = c;
+                    }
+
+                    if(
+                        text.includes("الاسم") ||
+                        text.includes("اللقب") ||
+                        text.includes("nom")
+                    ){
+                        nameCol = c;
+                    }
+                });
+            }
+
+            const isFrench =
+                sheetName.toLowerCase().includes("fran");
+
+            const isEnglish =
+                sheetName.toLowerCase().includes("eng");
+
+            let total = 0;
+            let passed = 0;
+
+            let c1=0,c2=0,c3=0,c4=0,c5=0,c6=0,c7=0;
+
+            const weaks = [];
+
+            for(let i=startRow; i<rows.length; i++){
+
+                const row = rows[i];
+
+                if(
+                    !row ||
+                    String(row[idCol]).trim() === "" ||
+                    isNaN(parseInt(row[idCol]))
+                ){
+                    break;
+                }
+
+                total++;
+
+                const name =
+                    row[nameCol]
+                    ? String(row[nameCol]).trim()
+                    : `تلميذ ${row[idCol]}`;
+
+                let score = NaN;
+
+                if(scoreCol !== -1){
+
+                    score = cleanNumber(row[scoreCol]);
+                }
+
+                if(isNaN(score)){
+
+                    for(let c=nameCol+1; c<row.length; c++){
+
+                        const val = cleanNumber(row[c]);
+
+                        if(!isNaN(val) && val >= 0 && val <= 20){
+
+                            score = val;
                             break;
                         }
                     }
-                    if (startRow === -1) startRow = 7; // قيمة احتياطية افتراضية
+                }
 
-                    // 2. التحليل الذكي للأعمدة (البحث عن عمود المعدل وعمود الملاحظات)
-                    let nameCol = 1; 
-                    let scoreCol = -1;
-                    let obsCol = -1;
+                if(isNaN(score)) score = 0;
 
-                    // فحص الأسطر القريبة فوق سطر البداية لاستخراج الأسماء الدقيقة للأعمدة
-                    let headerRowIndex = Math.max(0, startRow - 1);
-                    let headers = rows[headerRowIndex] || [];
+                score = Math.round(score * 100) / 100;
 
-                    for (let c = 0; c < headers.length; c++) {
-                        let headerText = String(headers[c]).trim().toLowerCase();
-                        if (headerText.includes("obs") || headerText.includes("ملاحظات") || headerText.includes("التقدير") || headerText.includes("توجيه")) {
-                            obsCol = c;
-                        }
-                        // البحث عن عمود المعدل النهائي أو علامة المادة
-                        if (headerText.includes("معدل") || headerText.includes("moyenne") || headerText.includes("المعدل") || headerText.includes("النهائي")) {
-                            scoreCol = c;
-                        }
-                    }
+                if(score >= 5){
+                    passed++;
+                }else{
+                    weaks.push(`${name} (${score})`);
+                }
 
-                    // إذا لم يجد العناوين نصياً، يحددها بناءً على نوع المادة احترازياً
-                    let isMath = sheetName.includes("رياضيات") || sheetName.includes("Math");
-                    let isFrench = sheetName.includes("فرنسية") || sheetName.includes("Français");
-                    let isEnglish = sheetName.includes("إنجليزية") || sheetName.includes("English");
-                    let isLanguage = sheetName.includes("عربية") || isFrench || isEnglish;
+                if(score < 4) c1++;
+                else if(score < 5) c2++;
+                else if(score < 6) c3++;
+                else if(score < 7) c4++;
+                else if(score < 8) c5++;
+                else if(score < 9) c6++;
+                else c7++;
 
-                    if (scoreCol === -1) {
-                        scoreCol = isLanguage ? 8 : (isMath ? 9 : 4); 
-                    }
-                    if (obsCol === -1) {
-                        obsCol = isMath ? 9 : (isLanguage ? 8 : 5);
-                    }
+                let obs = "";
 
-                    let total = 0, passed = 0, c1=0, c2=0, c3=0, c4=0, c5=0, c6=0, c7=0;
-                    let weaks = [];
+                if(isFrench){
 
-                    // 3. المعالجة وحقن الملاحظات بدون لمس البيانات المجاورة
-                    for (let i = startRow; i < rows.length; i++) {
-                        let row = rows[i];
-                        if (!row || row.length === 0 || isNaN(parseInt(row[0])) || String(row[0]).trim() === "") continue;
+                    obs =
+                        score < 5 ? "Résultats insuffisants" :
+                        score < 6 ? "Moyen" :
+                        score < 7 ? "Assez bien" :
+                        score < 8 ? "Bien" :
+                        "Très bien";
 
-                        total++;
-                        // محاولة قراءة الاسم بأمان تفرعي من العمود الأول أو الثاني
-                        let name = row[1] ? String(row[1]).trim() : (row[2] ? String(row[2]).trim() : `تلميذ رقم ${row[0]}`);
-                        
-                        // حساب أو قراءة المعدل ديناميكياً بحسب المدخلات المتوفرة في السطر
-                        let score = parseFloat(row[scoreCol]);
-                        if (isNaN(score) || score === 0) {
-                            // إذا كان العمود المكتشف فارغاً، يحسبه تلقائياً بناءً على مصفوفة المواد واللغات للرقمنة
-                            if (isLanguage && row[4] && row[7]) {
-                                score = (((parseFloat(row[4])||0) + (parseFloat(row[5])||0) + (parseFloat(row[6])||0)) / 3 + (parseFloat(row[7])||0)) / 2;
-                            } else if (isMath && row[4] && row[8]) {
-                                score = (((parseFloat(row[4])||0) + (parseFloat(row[5])||0) + (parseFloat(row[6])||0) + (parseFloat(row[7])||0)) / 4 + (parseFloat(row[8])||0)) / 2;
-                            } else {
-                                score = parseFloat(row[4]) || 0;
-                            }
-                        }
+                }else if(isEnglish){
 
-                        score = Math.round(score * 100) / 100;
-                        if (score >= 5) passed++; else weaks.push(`${name} (${score})`);
+                    obs =
+                        score < 5 ? "Insufficient" :
+                        score < 6 ? "Average" :
+                        score < 7 ? "Good" :
+                        score < 8 ? "Very good" :
+                        "Excellent";
 
-                        if (score < 4) c1++; else if (score < 5) c2++; else if (score < 6) c3++; else if (score < 7) c4++; else if (score < 8) c5++; else if (score < 9) c6++; else c7++;
+                }else{
 
-                        // تخصيص لغة الملاحظة حسب المادة المكتشفة بالكامل
-                        let obs = "نتائج غير كافية";
-                        if (isFrench) {
-                            obs = score < 5 ? "Résultats insuffisants" : (score < 6 ? "Moyen" : (score < 7 ? "Assez bien" : "Bien"));
-                        } else if (isEnglish) {
-                            obs = score < 5 ? "Insufficient" : (score < 6 ? "Average" : (score < 7 ? "Good" : "Very good"));
-                        } else {
-                            obs = score < 5 ? "نتائج غير كافية" : (score < 6 ? "نتائج متوسطة" : (score < 7 ? "نتائج حسنة" : (score < 8 ? "نتائج جيدة" : "نتائج ممتازة")));
-                        }
-                        
-                        // حقن الملاحظة في الخلية المستهدفة مع حفظ ستايل الخلية الأصلي بالكامل
-                        let cellRef = XLSX.utils.encode_cell({r: i, c: obsCol});
-                        if (!worksheet[cellRef]) worksheet[cellRef] = {};
-                        worksheet[cellRef].t = 's';
-                        worksheet[cellRef].v = obs;
-                    }
+                    obs =
+                        score < 5 ? "نتائج غير كافية" :
+                        score < 6 ? "نتائج متوسطة" :
+                        score < 7 ? "نتائج حسنة" :
+                        score < 8 ? "نتائج جيدة" :
+                        "نتائج ممتازة";
+                }
 
-                    if(total > 0) {
-                        htmlContent += `<tr><td><b>${sheetName}</b></td><td>${total}</td><td>${c1}</td><td>${c2}</td><td>${c3}</td><td>${c4}</td><td>${c5}</td><td>${c6}</td><td>${c7}</td><td>${((passed/total)*100).toFixed(2)}%</td></tr>`;
-                        remContent += `<div><b>${sheetName}:</b> ${weaks.length ? weaks.join(' - ') : 'كل الفوج ناجح'}</div>`;
-                    }
-                });
+                if(obsCol !== -1){
 
-                statsTbody.innerHTML = htmlContent;
-                remediationList.innerHTML = remContent;
-                statsSection.style.display = "block"; actionArea.style.display = "flex";
-                statusDisplay.innerHTML = "🎉 نجح فك التشفير التلقائي للأعمدة والأسطر وجاري التحميل المباشر...";
+                    const cellRef =
+                        XLSX.utils.encode_cell({
+                            r:i,
+                            c:obsCol
+                        });
 
-                // تصدير آمن يعيد توليد نفس الملف بنفس تركيبته الرسومية والألوان
-                const wbout = XLSX.write(workbook, {bookType: 'xlsx', type: 'binary', cellStyles: true});
-                const blob = new Blob([function(s){
-                    const buf = new ArrayBuffer(s.length), view = new Uint8Array(buf);
-                    for (let i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF; return buf;
-                }(wbout)], {type: "application/octet-stream"});
-                
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob); link.download = originalFileName;
-                document.body.appendChild(link); link.click(); document.body.removeChild(link);
-                statusDisplay.innerHTML = "✅ اكتملت المعالجة المرنة بنجاح وحفظ الملف بنفس اسمه الأصلي!";
-            } catch (err) {
-                statusDisplay.innerHTML = "❌ حدث استثناء، تأكد أن الملف مستخرج من الرقمنة مباشرة.";
-                console.error(err);
+                    worksheet[cellRef] = {
+                        t:"s",
+                        v:obs
+                    };
+                }
             }
-        };
-        reader.readAsArrayBuffer(file);
-    });
 
-    document.getElementById('print-pdf-btn').addEventListener('click', () => {
-        const element = document.getElementById('pdf-content');
-        html2pdf().set({
-            margin: 15, filename: 'تقرير_الفئات_السبع_الوزارية.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-        }).from(element).save();
-    });
+            if(total > 0){
+
+                htmlContent += `
+                <tr>
+                <td><b>${sheetName}</b></td>
+                <td>${total}</td>
+                <td>${c1}</td>
+                <td>${c2}</td>
+                <td>${c3}</td>
+                <td>${c4}</td>
+                <td>${c5}</td>
+                <td>${c6}</td>
+                <td>${c7}</td>
+                <td>${((passed/total)*100).toFixed(2)}%</td>
+                </tr>
+                `;
+
+                remContent += `
+                <div>
+                <b>${sheetName}:</b>
+                ${
+                    weaks.length
+                    ? weaks.join(" - ")
+                    : "كل التلاميذ ناجحون"
+                }
+                </div>
+                `;
+            }
+        });
+
+        if(!htmlContent){
+
+            throw new Error(
+                "لم يتم العثور على بيانات صالحة."
+            );
+        }
+
+        statsTbody.innerHTML = htmlContent;
+        remediationList.innerHTML = remContent;
+
+        statsSection.style.display = "block";
+        actionArea.style.display = "flex";
+
+        const wbout = XLSX.write(workbook,{
+            bookType:"xlsx",
+            type:"array"
+        });
+
+        const blob = new Blob(
+            [wbout],
+            {
+                type:"application/octet-stream"
+            }
+        );
+
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "معالج_" + file.name;
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(url);
+
+        statusDisplay.innerHTML =
+            "✅ تمت المعالجة بنجاح";
+
+    }catch(err){
+
+        console.error(err);
+
+        statusDisplay.innerHTML =
+            "❌ خطأ: " + err.message;
+    }
+});
+
+document.getElementById("print-pdf-btn")
+.addEventListener("click",()=>{
+
+    const element =
+        document.getElementById("pdf-content");
+
+    html2pdf().set({
+        margin:10,
+        filename:"تقرير_الإحصاء.pdf",
+        image:{
+            type:"jpeg",
+            quality:0.98
+        },
+        html2canvas:{
+            scale:2,
+            useCORS:true
+        },
+        jsPDF:{
+            unit:"mm",
+            format:"a4",
+            orientation:"landscape"
+        }
+    }).from(element).save();
+});
 </script>
+
 </body>
 </html>
